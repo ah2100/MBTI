@@ -57,7 +57,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--c,var(--ink));o
 .slot{aspect-ratio:3/4;max-width:100%;border:2px dashed #b7beb9;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-size:28px;font-weight:600;color:#1d2321;background:#fff;transition:border-color .2s,background .2s}
 .slot.on{border-style:solid;border-color:#1d2321}
 .slot .hint{font-size:11px;color:#9aa19c;font-weight:500}
-#mbti{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+#mbti{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;text-transform:uppercase}
 .gate-msg{min-height:1.5em;font-size:14px;color:#c9d2cd}
 .gate-msg.err{color:#ffb3b3}
 .gate-msg.ok{color:#8fe3b8}
@@ -944,6 +944,7 @@ function receive(raw){
  return {ok:true,type,fresh,msg:fresh?`새 카드 획득! ${type} · ${NICK[type]}`:`${type} 카드를 한 장 더 받았어요.`};
 }
 let PENDING_GIFT=null;
+function fixVal(el,v){if(el.value.toUpperCase()!==v)el.value=v;try{const n=el.value.length;el.setSelectionRange(n,n);}catch(e){}return v;}
 const SITE="ah2100.github.io/MBTI";
 const RESET_H=1078251680;
 /* 선물 링크는 쓰지 않음: 코드는 직접 입력해서 주고받기 */
@@ -967,7 +968,7 @@ function gate(){
     </label>
     <span class="tap" id="tap">▲ 네 칸을 눌러 입력하세요</span>
     <div class="gpick" id="gpick" role="group" aria-label="캐릭터 성별"><span>캐릭터</span><button type="button" data-g="M" aria-pressed="false">남성</button><button type="button" data-g="F" aria-pressed="false">여성</button></div>
-    <input id="mbti" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+    <input id="mbti" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="done">
   </div>
   <div class="gate-msg" id="msg" role="status">사원증에 내 MBTI 네 글자를 입력하세요</div>
   <button class="scan" id="scan" disabled>출입증 태그하기</button>
@@ -979,7 +980,7 @@ function gate(){
  setTimeout(()=>inp.focus({preventScroll:true}),50);
  document.getElementById("slots").addEventListener("click",()=>inp.focus());
  inp.addEventListener("input",()=>{
-  let v=inp.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4); inp.value=v;
+  let v=fixVal(inp,inp.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4));
   let ok=true;
   for(let i=0;i<4;i++){const s=document.getElementById("s"+i),ch=v[i];
    if(ch){s.textContent=ch;s.classList.add("on");if(!valid[i].includes(ch))ok=false;}
@@ -995,7 +996,7 @@ function gate(){
  const paintG=()=>document.querySelectorAll("#gpick button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.g===selG)));paintG();
  document.querySelectorAll("#gpick button").forEach(b=>b.onclick=()=>{selG=b.dataset.g;lsSet("gender-v1",selG);paintG();inp.dispatchEvent(new Event("input"));});
  const ask=()=>{
-  const v=inp.value;
+  const v=inp.value.toUpperCase();
   if(!NICK[v]){const c=document.getElementById("card");c.classList.remove("shake");void c.offsetWidth;c.classList.add("shake");return;}
   const d=document.createElement("div");d.className="confirm";d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");
   d.innerHTML=`<div class="confirm-box"><div style="font-size:13px;font-weight:700;color:#626a66">이 유형으로 카드를 발급할까요?</div><div class="cfm-type">${v}</div><div class="cfm-g">${esc(NICK[v])} · ${selG==="M"?"남성":"여성"} 캐릭터</div><p>한 번 발급하면 <b>다른 유형으로 바꿀 수 없어요.</b><br>검사 결과의 내 유형이 맞는지<br>한 번 더 확인해 주세요.</p><div class="cfm-btns"><button type="button" class="cfm-no" id="cfno">다시 입력</button><button type="button" class="cfm-yes" id="cfyes">발급받기</button></div></div>`;
@@ -1004,7 +1005,7 @@ function gate(){
   document.getElementById("cfyes").onclick=()=>{d.remove();go();};
  };
  const go=()=>{
-  const v=inp.value;
+  const v=inp.value.toUpperCase();
   document.getElementById("led").classList.add("ok");
   msg.className="gate-msg ok";msg.textContent=`${v} · 출입 승인되었습니다`;
   btn.disabled=true;
@@ -1336,7 +1337,7 @@ function dex(incoming){
  bindBack();draw();
  const inp=document.getElementById("dexin"),dm=document.getElementById("dexmsg");
  document.getElementById("tomine").onclick=()=>{state.code=mine;state.giftView=null;card();};
- inp.oninput=()=>{inp.value=normCode(inp.value);};
+ inp.oninput=()=>{const v=normCode(inp.value);if(inp.value!==v){inp.value=v;try{inp.setSelectionRange(v.length,v.length);}catch(e){}}};
  const show=r=>{dm.className="tf-msg"+(r.ok?" ok":"");dm.textContent=r.msg;if(r.ok){draw();const cell=document.querySelector(`.dx-cell.got[data-c="${r.type}"]`);if(cell){cell.classList.add("pop");cell.scrollIntoView({block:"center",behavior:"smooth"});}}};
  const add=()=>{const r=receive(inp.value);if(r.ok)inp.value="";show(r);};
  document.getElementById("dexgo").onclick=add;inp.addEventListener("keydown",e=>{if(e.key==="Enter")add();});
@@ -1372,7 +1373,7 @@ function team(){
   TROWS.forEach((r,i)=>{
    const l=document.getElementById("tl"+i),c=document.getElementById("tc"+i);
    l.oninput=()=>{TROWS[i].l=l.value;};
-   c.oninput=()=>{c.value=c.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4);TROWS[i].c=c.value;c.classList.toggle("bad",c.value.length===4&&!NICK[c.value]);};
+   c.oninput=()=>{const v=fixVal(c,c.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4));TROWS[i].c=v;c.classList.toggle("bad",v.length===4&&!NICK[v]);};
   });
   document.querySelectorAll(".tf-g[data-gi]").forEach(b=>b.onclick=()=>{const r=TROWS[Number(b.dataset.gi)];r.g=(r.g||"F")==="M"?"F":"M";draw();});
   document.querySelectorAll(".tf-del").forEach(b=>b.onclick=()=>{TROWS.splice(Number(b.dataset.del),1);if(!TROWS.length)TROWS.push({l:"",c:""});draw();});
