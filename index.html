@@ -392,6 +392,15 @@ img.char{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;bo
 .resetbox input{width:110px;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px;text-align:center;letter-spacing:.2em;background:var(--paper);color:var(--ink)}
 .resetbox button{border:0;border-radius:10px;padding:8px 14px;font:inherit;font-weight:700;background:var(--ink);color:var(--bg);cursor:pointer}
 .resetmsg{font-size:12.5px;color:var(--muted);margin-top:6px;min-height:1em}
+.cl-serial{text-align:right;line-height:1.15}
+.cl-serial i{display:block;font-style:normal;font-family:var(--body);font-size:8px;font-weight:700;letter-spacing:.02em;color:#8a918d}
+.bmk{background:#fff7d6;color:#3d3200;border:1.5px solid #e8c547;border-radius:16px;padding:14px 16px;margin-bottom:14px;font-size:14px;line-height:1.6}
+.bmk strong{display:block;font-size:15.5px;margin-bottom:4px}
+.bmk .addr{display:inline-block;font-family:var(--mono);font-weight:600;background:#fff;border-radius:6px;padding:1px 8px;margin:2px 0}
+.bmk ul{margin:6px 0 10px;padding-left:18px}
+.bmk button{border:0;border-radius:10px;background:#3d3200;color:#fff7d6;font:inherit;font-weight:700;font-size:14px;padding:8px 16px;cursor:pointer}
+.bmk-foot{font-size:12.5px;color:var(--muted);margin-top:10px;text-align:center}
+.bmk-foot b{font-family:var(--mono);font-weight:600;color:var(--ink)}
 .cl-own.empty{color:#9aa19c;font-weight:600}
 .cl-serial{flex:none;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--cc)}
 .cl-flipbadge{position:absolute;left:8px;bottom:8px;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);border-radius:99px;padding:3px 9px}
@@ -935,6 +944,7 @@ function receive(raw){
  return {ok:true,type,fresh,msg:fresh?`새 카드 획득! ${type} · ${NICK[type]}`:`${type} 카드를 한 장 더 받았어요.`};
 }
 let PENDING_GIFT=null;
+const SITE="ah2100.github.io/MBTI";
 const RESET_H=1078251680;
 /* 선물 링크는 쓰지 않음: 코드는 직접 입력해서 주고받기 */
 
@@ -998,7 +1008,7 @@ function gate(){
   document.getElementById("led").classList.add("ok");
   msg.className="gate-msg ok";msg.textContent=`${v} · 출입 승인되었습니다`;
   btn.disabled=true;
-  setTimeout(()=>{lsSet("home-v1",{c:v,g:selG});state.code=v;state.home=v;state.gender=selG;lobby();},650);
+  setTimeout(()=>{lsSet("home-v1",{c:v,g:selG});lsSet("bmk-v1",1);state.code=v;state.home=v;state.gender=selG;lobby();},650);
  };
  btn.addEventListener("click",ask);
  inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!btn.disabled)ask();});
@@ -1028,7 +1038,9 @@ function lobby(){
  if(PENDING_GIFT&&state.code===state.home){const g=PENDING_GIFT;PENDING_GIFT=null;dex(g);return;}
  state.giftView=null;
  const code=state.code,k=frame(code),t=T[k],ei=code[0],e=EI[ei];
+ const showBmk=state.code===state.home&&lsGet("bmk-v1",0);
  app.innerHTML=`<div class="screen">${topbar()}
+  ${showBmk?`<div class="bmk" role="note" id="bmk"><strong>📌 카드 발급 완료! 지금 즐겨찾기 해 두세요</strong>내 카드와 도감은 <b>지금 이 브라우저</b>에 저장돼요. 다음에도 같은 브라우저로 열어야 그대로 보여요.<ul><li>아이폰 사파리: 공유 버튼 → <b>즐겨찾기에 추가</b></li><li>갤럭시 크롬: 오른쪽 위 ⋮ → <b>홈 화면에 추가</b></li></ul>주소 <span class="addr">${SITE}</span><br><button type="button" id="bmkok">확인했어요</button></div>`:""}
   <div class="hero">
    ${pic(code)}
    <div class="info">
@@ -1053,9 +1065,11 @@ function lobby(){
    <button class="tile" data-go="others">${ic("map")}<strong>다른 크루 구경하기</strong><small>우리 팀 동료는 어느 크루일까요?</small><span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
   </div>
   <p class="note"><b>활용 안내</b> 이 페이지는 MBTI 검사 결과를 해석한 뒤 참고용으로 보는 자료입니다. MBTI 유형과 크루는 '경향'을 보여주는 틀이며 능력이나 성과의 기준이 아닙니다. 같은 유형이라도 상황과 경험에 따라 다르게 행동합니다. 동료를 유형으로 단정하는 데 쓰지 말아 주세요. 16개 유형을 4개 크루로 묶은 기준은 Keirsey의 4기질 모델입니다.</p>
+  ${state.code===state.home?`<p class="bmk-foot">다시 볼 땐 즐겨찾기로 · <b>${SITE}</b><br>시크릿·비공개 창에서는 기록이 남지 않아요</p>`:""}
   ${state.code===state.home?`<div class="resetrow"><button type="button" class="resetlink" id="rsopen">유형을 잘못 입력했나요?</button><div id="rsbox" hidden><div class="resetbox"><input id="rsin" inputmode="numeric" maxlength="4" placeholder="진행자 코드" aria-label="진행자 초기화 코드"><button type="button" id="rsgo">초기화</button></div><p class="resetmsg" id="rsmsg">진행자에게 받은 네 자리 코드를 입력하면 유형을 다시 등록할 수 있어요.</p></div></div>`:""}
  </div>`;
  bindTop();
+ const bk=document.getElementById("bmkok");if(bk)bk.onclick=()=>{lsSet("bmk-v1",0);document.getElementById("bmk").remove();};
  const rso=document.getElementById("rsopen");if(rso)rso.onclick=()=>{document.getElementById("rsbox").hidden=false;rso.hidden=true;document.getElementById("rsin").focus();};
  const rsg=document.getElementById("rsgo");if(rsg)rsg.onclick=()=>{const v=document.getElementById("rsin").value.trim();if(fnv("rs:"+v)!==RESET_H){document.getElementById("rsmsg").textContent="코드가 맞지 않아요. 진행자에게 다시 확인해 주세요.";return;}try{localStorage.removeItem("home-v1");}catch(e){}state.code=null;state.home=null;gate();};
  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>ROOM_FN[b.dataset.go]());
@@ -1178,7 +1192,7 @@ function cardFront(code,gc,o){
    <div class="cl-title"><strong>${esc(NICK[code])}</strong></div>
    <div class="cl-crew">${t.name} · ${EI[ei].label}</div>
    <div class="cl-skills"><div class="cl-sk"><i>필살기</i><b>${esc(sk[0])}</b></div><div class="cl-sk weak"><i>약점</i><b>${esc(sk[1])}</b></div></div>
-   <div class="cl-foot">${own}<span class="cl-serial">${gc&&!o.noCode?`#${gc}`:""}</span></div>
+   <div class="cl-foot">${own}<span class="cl-serial">${gc&&!o.noCode?`<i>선물 코드</i>${gc}`:""}</span></div>
   </div>
   </div>`;
 }
@@ -1222,7 +1236,7 @@ function card(){
    <button type="button" class="sbtn" id="stxt">${ic("chat")}<span>글로 복사</span></button>
   </div>
   <div class="extrasave"><button type="button" class="backsave" id="sback">뒷면(사용설명서) 저장</button><span aria-hidden="true">·</span><button type="button" class="backsave" id="schar">캐릭터 그림만 저장</button></div>`}
-  ${locked?"":`<p class="smsg" id="smsg" role="status">카드 앞면 한 장이 깔끔하게 저장됩니다. 선물 코드는 뒷면 이미지와 '글로 복사'에 들어 있어요.</p>`}
+  ${locked?"":`<p class="smsg" id="smsg" role="status">카드 앞면 한 장이 저장됩니다. 오른쪽 아래 선물 코드도 함께 들어가요.</p>`}
   <textarea id="sfallback" class="sfb" readonly hidden></textarea>
   <div id="exportbox"></div>
  </div>`;
@@ -1248,7 +1262,7 @@ function card(){
  const saveFace=async(side,btn)=>{
   btn.disabled=true;msg("이미지를 만드는 중이에요…");
   const box=document.getElementById("exportbox");box.className="exportbox t-"+k;
-  const eo={...opt(),placeholder:false,noCode:side!=="back"};box.innerHTML=`<div class="ex-pair">${side==="back"?cardBack(code,gc,eo):cardFront(code,gc,eo)}</div>`;
+  const eo={...opt(),placeholder:false,noCode:side!=="back"&&!own};box.innerHTML=`<div class="ex-pair">${side==="back"?cardBack(code,gc,eo):cardFront(code,gc,eo)}</div>`;
   try{
    const blob=await cardImage(box.firstElementChild);
    const name=`유형카드_${code}${side==="back"?"_뒷면":""}.png`;
